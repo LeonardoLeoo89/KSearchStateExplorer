@@ -10,6 +10,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/examples" />
+            <option value="$PROJECT_DIR$/examples/protein_folding" />
             <option value="$PROJECT_DIR$/examples/puzzle" />
             <option value="$PROJECT_DIR$/framework" />
           </set>

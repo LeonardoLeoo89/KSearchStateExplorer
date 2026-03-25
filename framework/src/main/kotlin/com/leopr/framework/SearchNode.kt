@@ -15,11 +15,12 @@ data class SearchNode<S: State, A: Action>(
     fun getPath(): List<SearchNode<S, A>> {
         val path = mutableListOf<SearchNode<S, A>>()
         var current : SearchNode<S, A> = this
-        while (current.parent != null) {
+        while (true) {
+            val p = current.parent ?: break
             if (current.action != null) {
                 path.add(0, current)
-                current = current.parent
             }
+            current = p
         }
         return path
     }
