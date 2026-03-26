@@ -2,12 +2,10 @@ package com.leopr.protein_folding
 
 
 import com.leopr.framework.AlgorithmType
-import com.leopr.framework.SearchEngine
 import com.leopr.framework.SearchRunner
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
-import kotlin.math.abs
 
 fun main(args: Array<String>) {
     val parser = ArgParser("protein_folding")
@@ -32,7 +30,7 @@ fun main(args: Array<String>) {
     for (a in algoStrings) {
         try {
             algorithmsToRun.add(AlgorithmType.valueOf(a.trim().uppercase()))
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             println("Error: Unknown algorithm '${a.trim()}'. Available: ${AlgorithmType.entries.joinToString()}")
             return
         }

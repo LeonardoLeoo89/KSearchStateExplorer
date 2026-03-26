@@ -50,7 +50,7 @@ class SearchEngine <S: State, A: Action>(val problem: Problem<S, A>, val type: A
                         val result = recursiveDLS(child)
                         if (result != null) {
                             if (!findBestSolution) return result
-                            if (bestResultSoFar == null || result.pathCost < bestResultSoFar!!.pathCost) {
+                            if (bestResultSoFar == null || result.pathCost < bestResultSoFar.pathCost) {
                                 bestResultSoFar = result
                             }
                         }
