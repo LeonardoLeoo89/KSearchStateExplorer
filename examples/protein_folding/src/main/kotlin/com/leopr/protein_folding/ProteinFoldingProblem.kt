@@ -8,7 +8,7 @@ data class Pos(val x: Int, val y: Int) {
     operator fun plus(other: Pos) = Pos(x + other.x, y + other.y)
 }
 
-data class ProteinState(val positions: List<Pos>) : State
+data class ProteinState(val positions: List<Pos>, val contacts: Int = 0) : State
 
 enum class Move(val d: Pos) : Action {
     UP(Pos(0, 1)),
@@ -18,8 +18,29 @@ enum class Move(val d: Pos) : Action {
 }
 
 class ProteinFoldingProblem(val protein: String) : Problem<ProteinState, Move>(
-    ProteinState(listOf(Pos(0, 0)))
+    ProteinState(listOf(Pos(0, 0)), 0)
 ) {
+    private val unplaced = IntArray(protein.length + 1)
+    private val evenMaxTotal: Int
+    private val oddMaxTotal: Int
+
+    init {
+        var even = 0
+        var odd = 0
+        for (i in protein.length - 1 downTo 0) {
+            // capacità di quanti contatti può fare l'i-esimo aminoacido
+            var cap = 0
+            if (protein[i] == 'H') {
+                // 3 contatti se si trova all'estremo, due altrimenti
+                cap = if (i == 0 || i == protein.length - 1) 3 else 2
+                if (i % 2 == 0) even += cap else odd += cap
+            }
+            unplaced[i] = unplaced[i + 1] + cap
+        }
+        evenMaxTotal = even
+        oddMaxTotal = odd
+    }
+
     override fun isGoal(state: ProteinState): Boolean {
         return state.positions.size == protein.length
     }
@@ -46,41 +67,56 @@ class ProteinFoldingProblem(val protein: String) : Problem<ProteinState, Move>(
         val newPos = state.positions.last() + action.d
         val newPositions = state.positions.toMutableList()
         newPositions.add(newPos)
-        return ProteinState(newPositions)
-    }
-
-   override fun stepCost(state: ProteinState, action: Move): Double {
-       val newPos = state.positions.last() + action.d
-       val indexInProtein = state.positions.size
-       val aminoAcid = protein[indexInProtein]
-
-       if (aminoAcid == 'P') {
-           return 3.0
-       }
-
-       var contacts = 0
-       val prevPos = state.positions.last()
-
-       for (i in 0 until state.positions.size - 1) {
-           if (protein[i] == 'H') {
-               val p = state.positions[i]
-               val manhattan = (newPos.x - p.x).let { if (it < 0) -it else it } +
-                              (newPos.y - p.y).let { if (it < 0) -it else it }
-               if (manhattan == 1 && p != prevPos) {
-                   contacts++
-               }
-           }
-       }
-       return 3.0 - contacts.toDouble()
-   }
-
-    override fun h(state: ProteinState): Double {
-        var remainingP = 0
-        for (i in state.positions.size until protein.length) {
-            if (protein[i] == 'P') {
-                remainingP++
+        
+        var newContacts = 0
+        val index = state.positions.size
+        if (protein[index] == 'H') {
+            for (i in 0 until index - 1) { // exclude directly preceding
+                if (protein[i] == 'H') {
+                    val p = state.positions[i]
+                    val manhattan = (newPos.x - p.x).let { if (it < 0) -it else it } +
+                                    (newPos.y - p.y).let { if (it < 0) -it else it }
+                    if (manhattan == 1) {
+                        newContacts++
+                    }
+                }
             }
         }
-        return remainingP * 3.0
+        
+        return ProteinState(newPositions, state.contacts + newContacts)
+    }
+
+    override fun stepCost(state: ProteinState, action: Move): Double {
+        val index = state.positions.size
+        val aminoAcid = protein[index]
+        if (aminoAcid == 'P') return 3.0
+        
+        val newPos = state.positions.last() + action.d
+        var newContacts = 0
+        for (i in 0 until index - 1) { // exclude directly preceding
+            if (protein[i] == 'H') {
+                val p = state.positions[i]
+                val manhattan = (newPos.x - p.x).let { if (it < 0) -it else it } +
+                                (newPos.y - p.y).let { if (it < 0) -it else it }
+                if (manhattan == 1) {
+                    newContacts++
+                }
+            }
+        }
+        return 3.0 - newContacts.toDouble()
+    }
+
+    override fun h(state: ProteinState): Double {
+        val currentSize = state.positions.size
+        if (currentSize == protein.length) return 0.0
+
+        val maxNewEven = evenMaxTotal - state.contacts
+        val maxNewOdd = oddMaxTotal - state.contacts
+        val unplacedSum = unplaced[currentSize]
+        
+        val maxNewContacts = minOf(maxNewEven, maxNewOdd, unplacedSum)
+
+        val remainingSteps = protein.length - currentSize
+        return maxOf(0.0, remainingSteps * 3.0 - maxNewContacts)
     }
 }

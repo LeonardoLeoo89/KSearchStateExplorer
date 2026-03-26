@@ -16,7 +16,7 @@ AI Search State Exploration framework in Kotlin featuring the following search a
 
 ### Available examples:
 
-- `protein_folding`: 2D HP Protein Folding problem.
+- [`protein_folding`](examples/protein_folding/README.md): 2D HP Protein Folding problem.
 
 #### How to run examples without building
 

@@ -3,6 +3,8 @@ package com.leopr.framework
 enum class AlgorithmType { BFS, DFS, MIN_COST, GREEDY, A_STAR, ITERATIVE_DEEPENING }
 
 class SearchEngine <S: State, A: Action>(val problem: Problem<S, A>, val type: AlgorithmType) {
+    var visitedNodes: Int = 0
+
     fun calculateF(s: S, g: Double): Double {
         return when (type) {
             AlgorithmType.MIN_COST -> g
@@ -21,7 +23,7 @@ class SearchEngine <S: State, A: Action>(val problem: Problem<S, A>, val type: A
         }
     }
 
-    fun solve(): SearchNode<S, A>? {
+    fun solve(findBestSolution: Boolean = false): SearchNode<S, A>? {
         if (type == AlgorithmType.ITERATIVE_DEEPENING) {
             val initialNode = SearchNode<S, A>(problem.initialState)
             
@@ -30,22 +32,32 @@ class SearchEngine <S: State, A: Action>(val problem: Problem<S, A>, val type: A
                 val pathStates = mutableSetOf<S>()
 
                 fun recursiveDLS(node: SearchNode<S, A>): SearchNode<S, A>? {
-                    if (problem.isGoal(node.state)) return node
+                    visitedNodes++
+                    if (problem.isGoal(node.state)) {
+                        return node
+                    }
                     if (node.depth >= limit) {
                         cutoff = true
                         return null
                     }
+                    
+                    var bestResultSoFar: SearchNode<S, A>? = null
                     
                     pathStates.add(node.state)
                     
                     for (child in expand(node)) {
                         if (pathStates.contains(child.state)) continue
                         val result = recursiveDLS(child)
-                        if (result != null) return result
+                        if (result != null) {
+                            if (!findBestSolution) return result
+                            if (bestResultSoFar == null || result.pathCost < bestResultSoFar!!.pathCost) {
+                                bestResultSoFar = result
+                            }
+                        }
                     }
                     
                     pathStates.remove(node.state)
-                    return null
+                    return bestResultSoFar
                 }
 
                 val result = recursiveDLS(initialNode)
@@ -65,10 +77,20 @@ class SearchEngine <S: State, A: Action>(val problem: Problem<S, A>, val type: A
         val initialF = calculateF(problem.initialState, 0.0)
         frontier.push(SearchNode(problem.initialState, evaluation = initialF))
 
+        var bestResult: SearchNode<S, A>? = null
+
         while (!frontier.isEmpty()) {
-            val node = frontier.pop() ?: return null
+            val node = frontier.pop() ?: break
+            visitedNodes++
             if (problem.isGoal(node.state)) {
-                return node
+                if (bestResult == null || node.pathCost < bestResult.pathCost) {
+                    bestResult = node
+                }
+                if (!findBestSolution) {
+                    return bestResult
+                } else {
+                    continue // Keep exploring
+                }
             }
             explored.add(node.state)
             for (child in expand(node)) {
@@ -76,6 +98,6 @@ class SearchEngine <S: State, A: Action>(val problem: Problem<S, A>, val type: A
                 frontier.push(child)
             }
         }
-        return null
+        return bestResult
     }
 }
