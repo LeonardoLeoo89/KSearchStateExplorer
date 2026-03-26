@@ -26,4 +26,4 @@ The heuristic is based on the idea that topological contacts between cells can e
 
 By counting how many 'H' amino acids are left to be placed on Even (white) and Odd (black) positions, the heuristic finds the absolute limit of future connections. Since every new contact needs exactly one Even and one Odd 'H', the maximum possible number of contacts is limited by whichever parity has the fewest 'H's remaining. The heuristic formula is:
 
-$$ h(n) = \text{Capacity}\_{\text{Unplaced}} - \min(\text{Unplaced_H}, \text{MaxNewEven}, \text{MaxNewOdd}) $$
+$$h(n) = \text{Capacity}_{\text{Unplaced}} - \min(\text{Unplaced\_H}, \text{MaxNewEven}, \text{MaxNewOdd})$$
